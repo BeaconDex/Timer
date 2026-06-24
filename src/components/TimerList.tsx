@@ -2,11 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useTimerStore } from '@/stores/timerStore'
 import TimerCard from './TimerCard'
 
-interface TimerListProps {
-  onTimerComplete: (id: string) => void
-}
-
-export default function TimerList({ onTimerComplete }: TimerListProps) {
+export default function TimerList() {
   const timers = useTimerStore((s) => s.timers)
 
   if (timers.length === 0) {
@@ -35,7 +31,6 @@ export default function TimerList({ onTimerComplete }: TimerListProps) {
           <TimerCard
             key={timer.id}
             timer={timer}
-            onComplete={onTimerComplete}
           />
         ))}
       </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTimerStore } from './stores/timerStore'
 import { useSettingsStore } from './stores/settingsStore'
 import { useSound } from './hooks/useSound'
@@ -9,47 +9,36 @@ import SettingsPanel from './components/SettingsPanel'
 import TitleBar from './components/TitleBar'
 
 export default function App() {
-  const [alertTimerId, setAlertTimerId] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const { startAlarm, stopAlarm } = useSound()
-  const alertedRef = useRef<Set<string>>(new Set())
+  const alertTimerId = useTimerStore((s) => s.alertTimerId)
+  const dismissAlert = useTimerStore((s) => s.dismissAlert)
   const timers = useTimerStore((s) => s.timers)
   const settings = useSettingsStore()
 
-  // Watch for completed timers
+  // Watch for alertTimerId changes — this is the "time-up message"
+  // It fires exactly once per completion because the store only sets it on completeTimer
   useEffect(() => {
-    for (const timer of timers) {
-      if (timer.isCompleted && !alertedRef.current.has(timer.id)) {
-        alertedRef.current.add(timer.id)
-        setAlertTimerId(timer.id)
+    if (alertTimerId) {
+      const timer = timers.find((t) => t.id === alertTimerId)
 
-        // Sound alarm (if enabled)
-        if (settings.soundEnabled) {
-          startAlarm(settings.alarmDuration > 0 ? settings.alarmDuration : undefined)
-        }
+      if (settings.soundEnabled) {
+        startAlarm(settings.alarmDuration > 0 ? settings.alarmDuration : undefined)
+      }
 
-        // Windows notification (if enabled)
-        if (settings.notificationsEnabled && window.electronAPI) {
-          window.electronAPI.showNotification(
-            'Timer Finished',
-            `"${timer.label}" has completed!`
-          )
-        }
+      if (settings.notificationsEnabled && window.electronAPI) {
+        window.electronAPI.showNotification(
+          'Timer Finished',
+          timer ? `"${timer.label}" has completed!` : 'A timer has completed!'
+        )
       }
     }
-
-    // Clean up refs for removed timers
-    for (const id of alertedRef.current) {
-      if (!timers.find((t) => t.id === id)) {
-        alertedRef.current.delete(id)
-      }
-    }
-  }, [timers, startAlarm, settings.soundEnabled, settings.notificationsEnabled, settings.alarmDuration])
+  }, [alertTimerId]) // Only fires when alertTimerId changes — pure event
 
   const handleDismissAlert = useCallback(() => {
     stopAlarm()
-    setAlertTimerId(null)
-  }, [stopAlarm])
+    dismissAlert()
+  }, [stopAlarm, dismissAlert])
 
   const alertTimer = alertTimerId
     ? timers.find((t) => t.id === alertTimerId)
@@ -72,7 +61,7 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-28">
-          <TimerList onTimerComplete={() => {}} />
+          <TimerList />
         </div>
 
         {/* Settings button — bottom left */}

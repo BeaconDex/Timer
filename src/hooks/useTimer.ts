@@ -3,7 +3,6 @@ import { useTimerStore } from '@/stores/timerStore'
 
 export function useTimer(timerId: string) {
   const timer = useTimerStore((s) => s.timers.find((t) => t.id === timerId))
-  const tickTimer = useTimerStore((s) => s.tickTimer)
   const tickTimerBySeconds = useTimerStore((s) => s.tickTimerBySeconds)
   const completeTimer = useTimerStore((s) => s.completeTimer)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -16,20 +15,25 @@ export function useTimer(timerId: string) {
     }
   }, [])
 
-  // Main countdown interval
+  // Main countdown — Date.now()-based to survive Chromium's background throttling
   useEffect(() => {
-    if (timer?.isRunning && !timer.isCompleted) {
+    if (timer?.isRunning) {
       lastTickRef.current = Date.now()
 
       intervalRef.current = setInterval(() => {
-        tickTimer(timerId)
-      }, 1000)
+        const now = Date.now()
+        const elapsed = Math.floor((now - lastTickRef.current) / 1000)
+        if (elapsed >= 1) {
+          tickTimerBySeconds(timerId, elapsed)
+          lastTickRef.current += elapsed * 1000
+        }
+      }, 250) // poll every 250ms; actual ticks are batched by elapsed seconds
 
       return clearTimer
     } else {
       clearTimer()
     }
-  }, [timer?.isRunning, timer?.isCompleted, timerId, tickTimer, clearTimer])
+  }, [timer?.isRunning, timerId, tickTimerBySeconds, clearTimer])
 
   // Detect completion
   useEffect(() => {
@@ -38,7 +42,7 @@ export function useTimer(timerId: string) {
     }
   }, [timer?.remainingSeconds, timer?.isRunning, timerId, completeTimer])
 
-  // Visibility change compensation
+  // Visibility change compensation — catch up on wake
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && timer?.isRunning) {
@@ -46,8 +50,8 @@ export function useTimer(timerId: string) {
         const elapsed = Math.floor((now - lastTickRef.current) / 1000)
         if (elapsed > 1) {
           tickTimerBySeconds(timerId, elapsed)
+          lastTickRef.current += elapsed * 1000
         }
-        lastTickRef.current = now
       }
     }
 

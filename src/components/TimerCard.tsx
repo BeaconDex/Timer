@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useTimer } from '@/hooks/useTimer'
 import { useTimerStore, TimerData } from '@/stores/timerStore'
@@ -8,24 +7,21 @@ import TimerControls from './TimerControls'
 
 interface TimerCardProps {
   timer: TimerData
-  onComplete: (id: string) => void
 }
 
-export default function TimerCard({ timer: timerData, onComplete }: TimerCardProps) {
+export default function TimerCard({ timer: timerData }: TimerCardProps) {
   const timerHook = useTimer(timerData.id)
 
+  const alertTimerId = useTimerStore((s) => s.alertTimerId)
   const startTimer = useTimerStore((s) => s.startTimer)
   const pauseTimer = useTimerStore((s) => s.pauseTimer)
   const resetTimer = useTimerStore((s) => s.resetTimer)
   const removeTimer = useTimerStore((s) => s.removeTimer)
 
-  const handleComplete = useCallback(() => {
-    onComplete(timerData.id)
-  }, [timerData.id, onComplete])
-
   if (!timerHook) return null
 
   const { timer, progress, display } = timerHook
+  const isCompleted = timer.id === alertTimerId
 
   return (
     <motion.div
@@ -44,7 +40,7 @@ export default function TimerCard({ timer: timerData, onComplete }: TimerCardPro
         {/* Left: Progress ring + Timer info */}
         <div className="flex items-center gap-5 min-w-0">
           <ProgressRing
-            progress={timer.isCompleted ? 0 : progress}
+            progress={isCompleted ? 0 : progress}
             color={timer.color}
             size={88}
             strokeWidth={7}
@@ -61,7 +57,7 @@ export default function TimerCard({ timer: timerData, onComplete }: TimerCardPro
               hours={display.hours}
               minutes={display.minutes}
               seconds={display.seconds}
-              isCompleted={timer.isCompleted}
+              isCompleted={isCompleted}
             />
           </div>
         </div>
@@ -70,7 +66,7 @@ export default function TimerCard({ timer: timerData, onComplete }: TimerCardPro
         <div className="flex-shrink-0 pt-1">
           <TimerControls
             isRunning={timer.isRunning}
-            isCompleted={timer.isCompleted}
+            isCompleted={isCompleted}
             onStart={() => startTimer(timer.id)}
             onPause={() => pauseTimer(timer.id)}
             onReset={() => resetTimer(timer.id)}

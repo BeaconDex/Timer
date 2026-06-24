@@ -7,7 +7,6 @@ export interface TimerData {
   totalSeconds: number
   remainingSeconds: number
   isRunning: boolean
-  isCompleted: boolean
   createdAt: number
   color: string
 }
@@ -23,6 +22,7 @@ function nextColor(): string {
 
 interface TimerStore {
   timers: TimerData[]
+  alertTimerId: string | null
   addTimer: (label: string, totalSeconds: number) => void
   removeTimer: (id: string) => void
   updateTimer: (id: string, updates: Partial<TimerData>) => void
@@ -30,6 +30,7 @@ interface TimerStore {
   pauseTimer: (id: string) => void
   resetTimer: (id: string) => void
   completeTimer: (id: string) => void
+  dismissAlert: () => void
   tickTimer: (id: string) => void
   tickTimerBySeconds: (id: string, seconds: number) => void
 }
@@ -38,6 +39,7 @@ export const useTimerStore = create<TimerStore>()(
   persist(
     (set) => ({
       timers: [],
+      alertTimerId: null,
 
       addTimer: (label, totalSeconds) =>
         set((state) => ({
@@ -49,7 +51,6 @@ export const useTimerStore = create<TimerStore>()(
               totalSeconds,
               remainingSeconds: totalSeconds,
               isRunning: false,
-              isCompleted: false,
               createdAt: Date.now(),
               color: nextColor(),
             },
@@ -59,19 +60,20 @@ export const useTimerStore = create<TimerStore>()(
       removeTimer: (id) =>
         set((state) => ({
           timers: state.timers.filter((t) => t.id !== id),
+          alertTimerId: state.alertTimerId === id ? null : state.alertTimerId,
         })),
 
       updateTimer: (id, updates) =>
         set((state) => ({
           timers: state.timers.map((t) =>
-            t.id === id ? { ...t, ...updates, isCompleted: false } : t
+            t.id === id ? { ...t, ...updates } : t
           ),
         })),
 
       startTimer: (id) =>
         set((state) => ({
           timers: state.timers.map((t) =>
-            t.id === id ? { ...t, isRunning: true, isCompleted: false } : t
+            t.id === id ? { ...t, isRunning: true } : t
           ),
         })),
 
@@ -86,18 +88,33 @@ export const useTimerStore = create<TimerStore>()(
         set((state) => ({
           timers: state.timers.map((t) =>
             t.id === id
-              ? { ...t, remainingSeconds: t.totalSeconds, isRunning: false, isCompleted: false }
+              ? { ...t, remainingSeconds: t.totalSeconds, isRunning: false }
               : t
           ),
+          alertTimerId: state.alertTimerId === id ? null : state.alertTimerId,
         })),
 
       completeTimer: (id) =>
         set((state) => ({
           timers: state.timers.map((t) =>
             t.id === id
-              ? { ...t, isRunning: false, isCompleted: true, remainingSeconds: 0 }
+              ? { ...t, isRunning: false, remainingSeconds: 0 }
               : t
           ),
+          // Emit alert event — non-persisted, survives only this session
+          alertTimerId: id,
+        })),
+
+      dismissAlert: () =>
+        set((state) => ({
+          alertTimerId: null,
+          timers: state.alertTimerId
+            ? state.timers.map((t) =>
+                t.id === state.alertTimerId
+                  ? { ...t, remainingSeconds: t.totalSeconds }
+                  : t
+              )
+            : state.timers,
         })),
 
       tickTimer: (id) =>
@@ -125,6 +142,7 @@ export const useTimerStore = create<TimerStore>()(
           ...t,
           isRunning: false,
         })),
+        // alertTimerId is NOT persisted — time-up is a message, not a status
       }),
     }
   )

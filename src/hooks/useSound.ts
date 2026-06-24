@@ -10,6 +10,10 @@ export function useSound() {
     if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
       audioContextRef.current = new AudioContext()
     }
+    // Resume if suspended (e.g. when window was in background)
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume().catch(() => {})
+    }
     return audioContextRef.current
   }, [])
 
