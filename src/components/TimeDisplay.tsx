@@ -5,7 +5,6 @@ interface TimeDisplayProps {
   minutes: number
   seconds: number
   isCompleted: boolean
-  onClick?: () => void
 }
 
 function pad(n: number): string {
@@ -29,7 +28,7 @@ function AnimatedDigit({ digit }: { digit: string }) {
   )
 }
 
-export default function TimeDisplay({ hours, minutes, seconds, isCompleted, onClick }: TimeDisplayProps) {
+export default function TimeDisplay({ hours, minutes, seconds, isCompleted }: TimeDisplayProps) {
   const hh = pad(hours)
   const mm = pad(minutes)
   const ss = pad(seconds)
@@ -39,8 +38,7 @@ export default function TimeDisplay({ hours, minutes, seconds, isCompleted, onCl
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="text-3xl font-bold tracking-tight text-warm-400 cursor-pointer select-none"
-        onClick={onClick}
+        className="text-3xl font-bold tracking-tight text-warm-400 select-none"
       >
         Done ✓
       </motion.div>
@@ -50,10 +48,7 @@ export default function TimeDisplay({ hours, minutes, seconds, isCompleted, onCl
   const hasHours = hours > 0
 
   return (
-    <div
-      className="flex items-baseline gap-1.5 cursor-pointer select-none group"
-      onClick={onClick}
-    >
+    <div className="flex items-baseline gap-1.5 select-none group">
       {hasHours && (
         <>
           <span className="text-5xl font-bold tracking-tighter text-warm-800">

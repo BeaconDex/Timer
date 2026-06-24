@@ -12,13 +12,23 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () =>
       role="switch"
       aria-checked={checked}
       onClick={onChange}
-      className={`relative w-14 h-8 rounded-full transition-colors duration-200 outline-none flex-shrink-0
-        ${checked ? 'bg-warm-800' : 'bg-warm-300'}`}
+      className="relative flex-shrink-0 rounded-full outline-none transition-colors duration-200"
+      style={{
+        width: 52,
+        height: 28,
+        backgroundColor: checked ? '#7A6652' : '#D1C9BD',
+      }}
     >
       <motion.div
-        animate={{ x: checked ? 24 : 2 }}
+        animate={{ x: checked ? 27 : 3 }}
         transition={{ type: 'spring', stiffness: 600, damping: 28 }}
-        className="absolute top-1 w-6 h-6 rounded-full bg-white shadow-md"
+        className="absolute rounded-full bg-white shadow-md"
+        style={{
+          width: 22,
+          height: 22,
+          top: 3,
+          left: 0,
+        }}
       />
     </button>
   )

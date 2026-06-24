@@ -15,18 +15,26 @@ const QUICK_TIMES = [
 
 export default function AddTimerButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const [timerName, setTimerName] = useState('')
   const [customMinutes, setCustomMinutes] = useState('')
   const addTimer = useTimerStore((s) => s.addTimer)
 
+  const resolveName = (fallback: string) => {
+    const trimmed = timerName.trim()
+    return trimmed || fallback
+  }
+
   const handleQuickAdd = (seconds: number, label: string) => {
-    addTimer(label, seconds)
+    addTimer(resolveName(label), seconds)
+    setTimerName('')
     setIsOpen(false)
   }
 
   const handleCustomAdd = () => {
     const mins = parseInt(customMinutes)
     if (mins > 0 && mins <= 1440) {
-      addTimer(`${mins} min`, mins * 60)
+      addTimer(resolveName(`${mins} min`), mins * 60)
+      setTimerName('')
       setCustomMinutes('')
       setIsOpen(false)
     }
@@ -43,7 +51,24 @@ export default function AddTimerButton() {
             transition={{ duration: 0.2 }}
             className="absolute bottom-20 right-0 bg-white rounded-3xl shadow-card-hover p-5 w-72 z-20"
           >
-            <p className="text-xs font-bold text-warm-400 uppercase tracking-widest mb-4 px-1">
+            {/* Timer name */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-warm-400 uppercase tracking-widest mb-2 px-1">
+                Timer Name
+              </p>
+              <input
+                type="text"
+                value={timerName}
+                onChange={(e) => setTimerName(e.target.value)}
+                placeholder="e.g. Pasta, Tea, Break…"
+                className="w-full px-4 py-2.5 text-sm font-semibold bg-warm-50 rounded-2xl outline-none
+                           ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                           transition-all placeholder:text-warm-300"
+              />
+            </div>
+
+            {/* Quick times */}
+            <p className="text-xs font-bold text-warm-400 uppercase tracking-widest mb-3 px-1">
               Quick Add
             </p>
             <div className="grid grid-cols-3 gap-2 mb-5">
@@ -58,6 +83,8 @@ export default function AddTimerButton() {
                 </button>
               ))}
             </div>
+
+            {/* Custom minutes */}
             <div className="border-t-2 border-warm-100 pt-4">
               <p className="text-xs font-bold text-warm-400 uppercase tracking-widest mb-3 px-1">
                 Custom Minutes
