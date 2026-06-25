@@ -139,7 +139,8 @@ export default function AddTimerButton() {
               <button
                 onClick={toggleCustomMode}
                 className="text-[11px] font-bold text-warm-400 hover:text-warm-600 bg-warm-100
-                           hover:bg-warm-200 px-0 py-0.5 rounded-lg transition-colors w-[64px] text-center"
+                           hover:bg-warm-200 rounded-lg transition-colors w-[68px] h-[22px]
+                           flex items-center justify-center"
               >
                 {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
               </button>
