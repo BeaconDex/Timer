@@ -20,12 +20,20 @@ export default function AddTimerButton() {
   const [hours, setHours] = useState('')
   const [minutes, setMinutes] = useState('')
   const [seconds, setSeconds] = useState('')
+  const [customMinutesOnly, setCustomMinutesOnly] = useState('')
+  const [customMode, setCustomMode] = useState<'mixed' | 'minutes'>('mixed')
   const addTimer = useTimerStore((s) => s.addTimer)
 
   const h = parseInt(hours) || 0
   const m = parseInt(minutes) || 0
   const s = parseInt(seconds) || 0
-  const customTotal = h * 3600 + m * 60 + s
+  const cm = parseInt(customMinutesOnly) || 0
+
+  const customTotal =
+    customMode === 'minutes'
+      ? cm * 60
+      : h * 3600 + m * 60 + s
+
   const hasCustomTime = customTotal > 0
   const hasPreset = selectedPreset !== null
 
@@ -36,6 +44,7 @@ export default function AddTimerButton() {
       const preset = QUICK_PRESETS.find((p) => p.seconds === selectedPreset)
       return preset?.label ?? 'Timer'
     }
+    if (customMode === 'minutes' && cm > 0) return `${cm} min`
     const parts: string[] = []
     if (h > 0) parts.push(`${h}h`)
     if (m > 0) parts.push(`${m}m`)
@@ -56,6 +65,8 @@ export default function AddTimerButton() {
     setHours('')
     setMinutes('')
     setSeconds('')
+    setCustomMinutesOnly('')
+    setCustomMode('mixed')
     setIsOpen(false)
   }
 
@@ -68,6 +79,11 @@ export default function AddTimerButton() {
     val: string
   ) => {
     setter(val)
+    setSelectedPreset(null)
+  }
+
+  const toggleCustomMode = () => {
+    setCustomMode((prev) => (prev === 'mixed' ? 'minutes' : 'mixed'))
     setSelectedPreset(null)
   }
 
@@ -119,48 +135,72 @@ export default function AddTimerButton() {
             {/* Divider + Custom time */}
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
-              <span className="text-[11px] font-bold text-warm-300 uppercase tracking-widest">or custom</span>
+              <span className="text-[11px] font-bold text-warm-300 tracking-wider">Or Custom</span>
+              <button
+                onClick={toggleCustomMode}
+                className="text-[11px] font-bold text-warm-400 hover:text-warm-600 bg-warm-100
+                           hover:bg-warm-200 px-2 py-0.5 rounded-lg transition-colors w-[52px] text-center"
+              >
+                {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
+              </button>
               <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
             </div>
 
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="number"
-                value={hours}
-                onChange={(e) => handleCustomInput(setHours, e.target.value)}
-                placeholder="0"
-                min="0"
-                max="99"
-                className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                           outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                           transition-all placeholder:text-warm-300"
-              />
-              <span className="text-sm font-bold text-warm-400">h</span>
-              <input
-                type="number"
-                value={minutes}
-                onChange={(e) => handleCustomInput(setMinutes, e.target.value)}
-                placeholder="0"
-                min="0"
-                max="59"
-                className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                           outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                           transition-all placeholder:text-warm-300"
-              />
-              <span className="text-sm font-bold text-warm-400">m</span>
-              <input
-                type="number"
-                value={seconds}
-                onChange={(e) => handleCustomInput(setSeconds, e.target.value)}
-                placeholder="0"
-                min="0"
-                max="59"
-                className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                           outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                           transition-all placeholder:text-warm-300"
-              />
-              <span className="text-sm font-bold text-warm-400">s</span>
-            </div>
+            {customMode === 'mixed' ? (
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="number"
+                  value={hours}
+                  onChange={(e) => handleCustomInput(setHours, e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  max="99"
+                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                />
+                <span className="text-sm font-bold text-warm-400">h</span>
+                <input
+                  type="number"
+                  value={minutes}
+                  onChange={(e) => handleCustomInput(setMinutes, e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  max="59"
+                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                />
+                <span className="text-sm font-bold text-warm-400">m</span>
+                <input
+                  type="number"
+                  value={seconds}
+                  onChange={(e) => handleCustomInput(setSeconds, e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  max="59"
+                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                />
+                <span className="text-sm font-bold text-warm-400">s</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="number"
+                  value={customMinutesOnly}
+                  onChange={(e) => handleCustomInput(setCustomMinutesOnly, e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  max="1440"
+                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                />
+                <span className="text-sm font-bold text-warm-400">min</span>
+              </div>
+            )}
 
             {/* Add button */}
             <button
