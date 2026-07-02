@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTimerStore } from '@/stores/timerStore'
 
+type TimerMode = 'countdown' | 'stopwatch'
+
 const QUICK_PRESETS = [
   { label: '1 min', seconds: 60 },
   { label: '3 min', seconds: 180 },
@@ -15,6 +17,7 @@ const QUICK_PRESETS = [
 
 export default function AddTimerButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const [timerMode, setTimerMode] = useState<TimerMode>('countdown')
   const [timerName, setTimerName] = useState('')
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null)
   const [hours, setHours] = useState('')
@@ -36,10 +39,12 @@ export default function AddTimerButton() {
 
   const hasCustomTime = customTotal > 0
   const hasPreset = selectedPreset !== null
+  const isCountdown = timerMode === 'countdown'
 
   const resolveName = () => {
     const trimmed = timerName.trim()
     if (trimmed) return trimmed
+    if (!isCountdown) return 'Stopwatch'
     if (hasPreset) {
       const preset = QUICK_PRESETS.find((p) => p.seconds === selectedPreset)
       return preset?.label ?? 'Timer'
@@ -53,13 +58,19 @@ export default function AddTimerButton() {
   }
 
   const handleAdd = () => {
-    if (hasPreset) {
-      addTimer(resolveName(), selectedPreset!)
-    } else if (hasCustomTime) {
-      addTimer(resolveName(), customTotal)
+    if (isCountdown) {
+      if (hasPreset) {
+        addTimer(resolveName(), selectedPreset!, 'countdown')
+      } else if (hasCustomTime) {
+        addTimer(resolveName(), customTotal, 'countdown')
+      } else {
+        return
+      }
     } else {
-      return
+      // Stopwatch — starts at 0, counts up
+      addTimer(resolveName(), 0, 'stopwatch')
     }
+
     setTimerName('')
     setSelectedPreset(null)
     setHours('')
@@ -67,6 +78,7 @@ export default function AddTimerButton() {
     setSeconds('')
     setCustomMinutesOnly('')
     setCustomMode('mixed')
+    setTimerMode('countdown')
     setIsOpen(false)
   }
 
@@ -74,10 +86,7 @@ export default function AddTimerButton() {
     setSelectedPreset((prev) => (prev === secs ? null : secs))
   }
 
-  const handleCustomInput = (
-    setter: (v: string) => void,
-    val: string
-  ) => {
+  const handleCustomInput = (setter: (v: string) => void, val: string) => {
     setter(val)
     setSelectedPreset(null)
   }
@@ -87,7 +96,7 @@ export default function AddTimerButton() {
     setSelectedPreset(null)
   }
 
-  const canAdd = hasPreset || hasCustomTime
+  const canAdd = !isCountdown || hasPreset || hasCustomTime
 
   return (
     <div className="relative">
@@ -100,110 +109,146 @@ export default function AddTimerButton() {
             transition={{ duration: 0.2 }}
             className="absolute bottom-20 right-0 bg-white rounded-3xl shadow-card-hover p-5 w-[420px] z-20"
           >
-            {/* Timer name */}
+            {/* ── Mode toggle ─────────────────────────────────── */}
+            <div className="relative flex bg-warm-100 rounded-xl p-1 mb-4">
+              {/* Sliding pill indicator */}
+              <motion.div
+                layout
+                className="absolute top-1 h-[calc(100%-8px)] bg-warm-800 rounded-lg shadow-sm"
+                style={{
+                  left: isCountdown ? '4px' : 'calc(50% + 2px)',
+                  width: 'calc(50% - 4px)',
+                }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
+
+              <button
+                onClick={() => setTimerMode('countdown')}
+                className={`relative z-10 flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors
+                  ${isCountdown ? 'text-white' : 'text-warm-400 hover:text-warm-600'}`}
+              >
+                Countdown
+              </button>
+              <button
+                onClick={() => setTimerMode('stopwatch')}
+                className={`relative z-10 flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors
+                  ${!isCountdown ? 'text-white' : 'text-warm-400 hover:text-warm-600'}`}
+              >
+                Stopwatch
+              </button>
+            </div>
+
+            {/* ── Timer name ──────────────────────────────────── */}
             <input
               type="text"
               value={timerName}
               onChange={(e) => setTimerName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && canAdd) handleAdd() }}
-              placeholder="Timer name…"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && canAdd) handleAdd()
+              }}
+              placeholder={isCountdown ? 'Timer name…' : 'Stopwatch name…'}
               className="w-full px-4 py-2.5 text-sm font-semibold bg-warm-50 rounded-2xl outline-none
                          ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                          transition-all placeholder:text-warm-300 mb-4"
             />
 
-            {/* Quick presets */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
-              {QUICK_PRESETS.map((preset) => {
-                const isSelected = selectedPreset === preset.seconds
-                return (
+            {/* ── Countdown-specific UI ───────────────────────── */}
+            {isCountdown && (
+              <>
+                {/* Quick presets */}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {QUICK_PRESETS.map((preset) => {
+                    const isSelected = selectedPreset === preset.seconds
+                    return (
+                      <button
+                        key={preset.seconds}
+                        onClick={() => handlePresetClick(preset.seconds)}
+                        className={`px-2 py-2 text-sm font-bold rounded-2xl transition-all
+                          ${isSelected
+                            ? 'bg-warm-800 text-white shadow-md'
+                            : 'bg-warm-50 text-warm-600 hover:bg-warm-100 active:bg-warm-200'
+                          }`}
+                      >
+                        {preset.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Divider + Custom time */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
+                  <span className="text-[11px] font-bold text-warm-300 tracking-wider">Or Custom</span>
                   <button
-                    key={preset.seconds}
-                    onClick={() => handlePresetClick(preset.seconds)}
-                    className={`px-2 py-2 text-sm font-bold rounded-2xl transition-all
-                      ${isSelected
-                        ? 'bg-warm-800 text-white shadow-md'
-                        : 'bg-warm-50 text-warm-600 hover:bg-warm-100 active:bg-warm-200'
-                      }`}
+                    onClick={toggleCustomMode}
+                    className="text-[11px] font-bold text-warm-400 hover:text-warm-600 bg-warm-100
+                               hover:bg-warm-200 rounded-lg transition-colors w-[68px] h-[22px]
+                               flex items-center justify-center"
                   >
-                    {preset.label}
+                    {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
                   </button>
-                )
-              })}
-            </div>
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
+                </div>
 
-            {/* Divider + Custom time */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
-              <span className="text-[11px] font-bold text-warm-300 tracking-wider">Or Custom</span>
-              <button
-                onClick={toggleCustomMode}
-                className="text-[11px] font-bold text-warm-400 hover:text-warm-600 bg-warm-100
-                           hover:bg-warm-200 rounded-lg transition-colors w-[68px] h-[22px]
-                           flex items-center justify-center"
-              >
-                {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
-              </button>
-              <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
-            </div>
-
-            {customMode === 'mixed' ? (
-              <div className="flex items-center gap-2 mb-4">
-                <input
-                  type="number"
-                  value={hours}
-                  onChange={(e) => handleCustomInput(setHours, e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  max="99"
-                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
-                />
-                <span className="text-sm font-bold text-warm-400">h</span>
-                <input
-                  type="number"
-                  value={minutes}
-                  onChange={(e) => handleCustomInput(setMinutes, e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  max="59"
-                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
-                />
-                <span className="text-sm font-bold text-warm-400">m</span>
-                <input
-                  type="number"
-                  value={seconds}
-                  onChange={(e) => handleCustomInput(setSeconds, e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  max="59"
-                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
-                />
-                <span className="text-sm font-bold text-warm-400">s</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 mb-4">
-                <input
-                  type="number"
-                  value={customMinutesOnly}
-                  onChange={(e) => handleCustomInput(setCustomMinutesOnly, e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  max="1440"
-                  className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
-                             outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                             transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
-                />
-                <span className="text-sm font-bold text-warm-400">min</span>
-              </div>
+                {customMode === 'mixed' ? (
+                  <div className="flex items-center gap-2 mb-4">
+                    <input
+                      type="number"
+                      value={hours}
+                      onChange={(e) => handleCustomInput(setHours, e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      max="99"
+                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                                 outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                                 transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                    />
+                    <span className="text-sm font-bold text-warm-400">h</span>
+                    <input
+                      type="number"
+                      value={minutes}
+                      onChange={(e) => handleCustomInput(setMinutes, e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      max="59"
+                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                                 outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                                 transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                    />
+                    <span className="text-sm font-bold text-warm-400">m</span>
+                    <input
+                      type="number"
+                      value={seconds}
+                      onChange={(e) => handleCustomInput(setSeconds, e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      max="59"
+                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                                 outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                                 transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                    />
+                    <span className="text-sm font-bold text-warm-400">s</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mb-4">
+                    <input
+                      type="number"
+                      value={customMinutesOnly}
+                      onChange={(e) => handleCustomInput(setCustomMinutesOnly, e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      max="1440"
+                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                                 outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
+                                 transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
+                    />
+                    <span className="text-sm font-bold text-warm-400">min</span>
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Add button */}
+            {/* ── Add button ──────────────────────────────────── */}
             <button
               onClick={handleAdd}
               disabled={!canAdd}
@@ -211,7 +256,7 @@ export default function AddTimerButton() {
                          hover:bg-warm-700 active:bg-warm-900 rounded-2xl transition-colors
                          disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Add Timer
+              {isCountdown ? 'Add Timer' : 'Start Stopwatch'}
             </button>
           </motion.div>
         )}

@@ -15,7 +15,7 @@ export function useTimer(timerId: string) {
     }
   }, [])
 
-  // Main countdown — Date.now()-based to survive Chromium's background throttling
+  // Main countdown / count-up — Date.now()-based to survive Chromium's background throttling
   useEffect(() => {
     if (timer?.isRunning) {
       lastTickRef.current = Date.now()
@@ -35,12 +35,12 @@ export function useTimer(timerId: string) {
     }
   }, [timer?.isRunning, timerId, tickTimerBySeconds, clearTimer])
 
-  // Detect completion
+  // Detect completion (countdown only — stopwatch never completes)
   useEffect(() => {
-    if (timer && timer.remainingSeconds <= 0 && timer.isRunning) {
+    if (timer && timer.mode === 'countdown' && timer.remainingSeconds <= 0 && timer.isRunning) {
       completeTimer(timerId)
     }
-  }, [timer?.remainingSeconds, timer?.isRunning, timerId, completeTimer])
+  }, [timer?.remainingSeconds, timer?.isRunning, timer?.mode, timerId, completeTimer])
 
   // Visibility change compensation — catch up on wake
   useEffect(() => {
@@ -61,13 +61,21 @@ export function useTimer(timerId: string) {
 
   if (!timer) return null
 
-  const progress = timer.totalSeconds > 0
-    ? timer.remainingSeconds / timer.totalSeconds
-    : 0
+  // Display seconds: countdown shows remaining, stopwatch shows elapsed
+  const displaySeconds = timer.mode === 'stopwatch'
+    ? timer.elapsedSeconds
+    : timer.remainingSeconds
 
-  const hours = Math.floor(timer.remainingSeconds / 3600)
-  const minutes = Math.floor((timer.remainingSeconds % 3600) / 60)
-  const seconds = timer.remainingSeconds % 60
+  // Progress: countdown = remaining/total, stopwatch = 60-second cycle
+  const progress = timer.mode === 'stopwatch'
+    ? (timer.elapsedSeconds % 60) / 60
+    : timer.totalSeconds > 0
+      ? timer.remainingSeconds / timer.totalSeconds
+      : 0
+
+  const hours = Math.floor(displaySeconds / 3600)
+  const minutes = Math.floor((displaySeconds % 3600) / 60)
+  const seconds = displaySeconds % 60
 
   return {
     timer,

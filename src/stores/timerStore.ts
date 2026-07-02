@@ -9,6 +9,8 @@ export interface TimerData {
   isRunning: boolean
   createdAt: number
   color: string
+  mode: 'countdown' | 'stopwatch'
+  elapsedSeconds: number
 }
 
 const COLORS = ['#E8C5C5', '#C5D3E8', '#C5E8D3', '#E8DDC5', '#D3C5E8']
@@ -23,7 +25,7 @@ function nextColor(): string {
 interface TimerStore {
   timers: TimerData[]
   alertTimerId: string | null
-  addTimer: (label: string, totalSeconds: number) => void
+  addTimer: (label: string, totalSeconds: number, mode?: 'countdown' | 'stopwatch') => void
   removeTimer: (id: string) => void
   updateTimer: (id: string, updates: Partial<TimerData>) => void
   startTimer: (id: string) => void
@@ -41,7 +43,7 @@ export const useTimerStore = create<TimerStore>()(
       timers: [],
       alertTimerId: null,
 
-      addTimer: (label, totalSeconds) =>
+      addTimer: (label, totalSeconds, mode = 'countdown') =>
         set((state) => ({
           timers: [
             ...state.timers,
@@ -53,6 +55,8 @@ export const useTimerStore = create<TimerStore>()(
               isRunning: false,
               createdAt: Date.now(),
               color: nextColor(),
+              mode,
+              elapsedSeconds: 0,
             },
           ],
         })),
@@ -86,11 +90,12 @@ export const useTimerStore = create<TimerStore>()(
 
       resetTimer: (id) =>
         set((state) => ({
-          timers: state.timers.map((t) =>
-            t.id === id
-              ? { ...t, remainingSeconds: t.totalSeconds, isRunning: false }
-              : t
-          ),
+          timers: state.timers.map((t) => {
+            if (t.id !== id) return t
+            return t.mode === 'stopwatch'
+              ? { ...t, elapsedSeconds: 0, isRunning: false }
+              : { ...t, remainingSeconds: t.totalSeconds, isRunning: false }
+          }),
           alertTimerId: state.alertTimerId === id ? null : state.alertTimerId,
         })),
 
@@ -119,20 +124,28 @@ export const useTimerStore = create<TimerStore>()(
 
       tickTimer: (id) =>
         set((state) => ({
-          timers: state.timers.map((t) =>
-            t.id === id && t.isRunning && t.remainingSeconds > 0
+          timers: state.timers.map((t) => {
+            if (t.id !== id || !t.isRunning) return t
+            if (t.mode === 'stopwatch') {
+              return { ...t, elapsedSeconds: t.elapsedSeconds + 1 }
+            }
+            return t.remainingSeconds > 0
               ? { ...t, remainingSeconds: t.remainingSeconds - 1 }
               : t
-          ),
+          }),
         })),
 
       tickTimerBySeconds: (id, seconds) =>
         set((state) => ({
-          timers: state.timers.map((t) =>
-            t.id === id && t.isRunning
-              ? { ...t, remainingSeconds: Math.max(0, t.remainingSeconds - seconds) }
-              : t
-          ),
+          timers: state.timers.map((t) => {
+            if (t.id !== id || !t.isRunning) return t
+            if (t.mode === 'stopwatch') {
+              // Count up — never completes
+              return { ...t, elapsedSeconds: t.elapsedSeconds + seconds }
+            }
+            // Count down
+            return { ...t, remainingSeconds: Math.max(0, t.remainingSeconds - seconds) }
+          }),
         })),
     }),
     {

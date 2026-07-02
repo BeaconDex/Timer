@@ -21,7 +21,9 @@ export default function TimerCard({ timer: timerData }: TimerCardProps) {
   if (!timerHook) return null
 
   const { timer, progress, display } = timerHook
-  const isCompleted = timer.id === alertTimerId
+  // Stopwatch never completes — it just counts up
+  const isStopwatch = timer.mode === 'stopwatch'
+  const isCompleted = !isStopwatch && timer.id === alertTimerId
 
   return (
     <motion.div
