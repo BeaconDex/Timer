@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTimerStore } from '@/stores/timerStore'
 
@@ -98,30 +98,6 @@ export default function AddTimerButton() {
 
   const canAdd = !isCountdown || hasPreset || hasCustomTime
 
-  // ── Preset pill overlay ────────────────────────────────────
-  const gridRef = useRef<HTMLDivElement>(null)
-  const btnRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
-  const [pillRect, setPillRect] = useState<{
-    left: number; top: number; width: number; height: number
-  } | null>(null)
-
-  useLayoutEffect(() => {
-    if (!gridRef.current || selectedPreset === null) {
-      setPillRect(null)
-      return
-    }
-    const btn = btnRefs.current.get(selectedPreset)
-    const gridRect = gridRef.current.getBoundingClientRect()
-    if (!btn) return
-    const r = btn.getBoundingClientRect()
-    setPillRect({
-      left: r.left - gridRect.left,
-      top: r.top - gridRect.top,
-      width: r.width,
-      height: r.height,
-    })
-  }, [selectedPreset])
-
   return (
     <div className="relative">
       <AnimatePresence>
@@ -180,40 +156,30 @@ export default function AddTimerButton() {
             {isCountdown && (
               <>
                 {/* Quick presets */}
-                <div ref={gridRef} className="grid grid-cols-4 gap-1 mb-4 relative">
-                  {/* Selection pill — behind buttons, FLIP-animated via layout prop.
-                      Mirrors the Countdown/Stopwatch toggle pill exactly. */}
-                  <motion.div
-                    layout
-                    className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none"
-                    style={{
-                      left: pillRect?.left ?? 0,
-                      top: pillRect?.top ?? 0,
-                      width: pillRect?.width ?? 0,
-                      height: pillRect?.height ?? 0,
-                      opacity: pillRect ? 1 : 0,
-                    }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  />
-
+                <div className="grid grid-cols-4 gap-1 mb-4">
                   {QUICK_PRESETS.map((preset) => {
                     const isSelected = selectedPreset === preset.seconds
                     return (
                       <motion.button
                         key={preset.seconds}
-                        ref={(el) => {
-                          if (el) btnRefs.current.set(preset.seconds, el as HTMLButtonElement)
-                        }}
                         onClick={() => handlePresetClick(preset.seconds)}
                         whileHover={{ scale: isSelected ? 1.02 : 1.04 }}
                         whileTap={{ scale: isSelected ? 0.98 : 0.96 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
-                        className={`relative z-10 px-3 py-2 text-base font-bold rounded-2xl
+                        className={`relative px-3 py-2 text-base font-bold rounded-2xl transition-colors
                           ${isSelected
-                            ? 'bg-warm-800 text-white'
+                            ? 'text-white'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
                           }`}
                       >
+                        {isSelected && (
+                          <motion.div
+                            layoutId="presetPill"
+                            className="absolute inset-0 bg-warm-800 rounded-2xl shadow-md"
+                            style={{ zIndex: -1 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                          />
+                        )}
                         {preset.label}
                       </motion.button>
                     )
