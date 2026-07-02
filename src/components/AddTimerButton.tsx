@@ -186,17 +186,16 @@ export default function AddTimerButton() {
                     {pillRect && (
                       <motion.div
                         key="preset-pill"
-                        className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none z-0"
+                        className="absolute rounded-2xl pointer-events-none z-20"
+                        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}
                         initial={false}
                         animate={{
                           left: pillRect.left,
                           top: pillRect.top,
                           width: pillRect.width,
                           height: pillRect.height,
-                          opacity: 1,
-                          scale: 1,
                         }}
-                        exit={{ opacity: 0, scale: 0.92 }}
+                        exit={{ opacity: 0 }}
                         transition={{
                           type: 'spring',
                           stiffness: 500,
@@ -228,7 +227,7 @@ export default function AddTimerButton() {
                         className={`relative z-10 px-3 py-2 text-base font-bold rounded-2xl
                           transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
                           ${isSelected
-                            ? 'text-white'
+                            ? 'bg-warm-800 text-white'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
                           }`}
                       >
