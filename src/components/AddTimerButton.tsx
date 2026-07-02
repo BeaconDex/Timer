@@ -178,11 +178,11 @@ export default function AddTimerButton() {
                 {/* Divider + Custom time */}
                 <div className="flex items-center gap-2 mb-1">
                   <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
-                  <span className="text-xs font-bold text-warm-300 tracking-wider">Or Custom</span>
+                  <span className="text-sm font-bold text-warm-300 tracking-wider">Or Custom</span>
                   <button
                     onClick={toggleCustomMode}
-                    className="text-xs font-bold text-warm-400 hover:text-warm-600 bg-warm-100
-                               hover:bg-warm-200 rounded-xl transition-colors w-20 h-[26px]
+                    className="text-sm font-bold text-warm-400 hover:text-warm-600 bg-warm-100
+                               hover:bg-warm-200 rounded-xl transition-colors w-[84px] h-7
                                flex items-center justify-center"
                   >
                     {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
@@ -191,7 +191,7 @@ export default function AddTimerButton() {
                 </div>
 
                 {customMode === 'mixed' ? (
-                  <div className="flex items-center gap-1 mb-2">
+                  <div className="flex items-center justify-center gap-1 mb-2">
                     <input
                       type="number"
                       value={hours}
@@ -230,7 +230,7 @@ export default function AddTimerButton() {
                     <span className="text-base font-bold text-warm-400">s</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 mb-2">
+                  <div className="flex items-center justify-center gap-1 mb-2">
                     <input
                       type="number"
                       value={customMinutesOnly}
