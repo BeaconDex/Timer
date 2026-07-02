@@ -156,7 +156,7 @@ export default function AddTimerButton() {
             {isCountdown && (
               <>
                 {/* Quick presets */}
-                <div className="grid grid-cols-4 gap-1 mb-2">
+                <div className="grid grid-cols-4 gap-1 mb-4">
                   {QUICK_PRESETS.map((preset) => {
                     const isSelected = selectedPreset === preset.seconds
                     return (
@@ -191,7 +191,7 @@ export default function AddTimerButton() {
                 </div>
 
                 {customMode === 'mixed' ? (
-                  <div className="flex items-center justify-center gap-1 mb-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
                     <input
                       type="number"
                       value={hours}
@@ -238,7 +238,7 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="1440"
-                      className="w-[100px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
+                      className="w-[200px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
