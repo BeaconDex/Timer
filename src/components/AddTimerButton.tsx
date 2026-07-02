@@ -181,30 +181,20 @@ export default function AddTimerButton() {
               <>
                 {/* Quick presets */}
                 <div ref={gridRef} className="grid grid-cols-4 gap-1 mb-4 relative">
-                  {/* Flying pill overlay — animates between selected buttons */}
-                  <AnimatePresence>
-                    {pillRect && (
-                      <motion.div
-                        key="preset-pill"
-                        className="absolute rounded-2xl pointer-events-none z-20"
-                        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}
-                        initial={false}
-                        animate={{
-                          left: pillRect.left,
-                          top: pillRect.top,
-                          width: pillRect.width,
-                          height: pillRect.height,
-                        }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 500,
-                          damping: 30,
-                          mass: 0.8,
-                        }}
-                      />
-                    )}
-                  </AnimatePresence>
+                  {/* Selection pill — always rendered, FLIP-animated via layout prop.
+                      Mirrors the Countdown/Stopwatch toggle pill exactly. */}
+                  <motion.div
+                    layout
+                    className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none"
+                    style={{
+                      left: pillRect?.left ?? 0,
+                      top: pillRect?.top ?? 0,
+                      width: pillRect?.width ?? 0,
+                      height: pillRect?.height ?? 0,
+                      opacity: pillRect ? 1 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
 
                   {QUICK_PRESETS.map((preset) => {
                     const isSelected = selectedPreset === preset.seconds
@@ -217,17 +207,11 @@ export default function AddTimerButton() {
                         onClick={() => handlePresetClick(preset.seconds)}
                         whileHover={{ scale: isSelected ? 1.02 : 1.04 }}
                         whileTap={{ scale: isSelected ? 0.98 : 0.96 }}
-                        layout
-                        transition={{
-                          type: 'spring',
-                          stiffness: 500,
-                          damping: 30,
-                          mass: 0.8,
-                        }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
                         className={`relative z-10 px-3 py-2 text-base font-bold rounded-2xl
-                          transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
+                          transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]
                           ${isSelected
-                            ? 'bg-warm-800 text-white'
+                            ? 'text-white'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
                           }`}
                       >
