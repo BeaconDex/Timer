@@ -185,7 +185,7 @@ export default function AddTimerButton() {
                       Mirrors the Countdown/Stopwatch toggle pill exactly. */}
                   <motion.div
                     layout
-                    className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none"
+                    className="absolute bg-warm-800/50 rounded-2xl pointer-events-none z-30"
                     style={{
                       left: pillRect?.left ?? 0,
                       top: pillRect?.top ?? 0,
@@ -211,7 +211,7 @@ export default function AddTimerButton() {
                         className={`relative z-10 px-3 py-2 text-base font-bold rounded-2xl
                           transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]
                           ${isSelected
-                            ? 'text-white'
+                            ? 'bg-warm-800 text-white'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
                           }`}
                       >
