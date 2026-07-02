@@ -107,10 +107,10 @@ export default function AddTimerButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-20 right-0 bg-white rounded-3xl shadow-card-hover p-5 w-[420px] z-20"
+            className="absolute bottom-20 right-0 bg-white rounded-3xl shadow-card-hover p-6 w-[520px] z-20"
           >
             {/* ── Mode toggle ─────────────────────────────────── */}
-            <div className="relative flex bg-warm-100 rounded-xl p-1 mb-4">
+            <div className="relative flex bg-warm-100 rounded-2xl p-1 mb-5">
               {/* Sliding pill indicator */}
               <motion.div
                 layout
@@ -124,14 +124,14 @@ export default function AddTimerButton() {
 
               <button
                 onClick={() => setTimerMode('countdown')}
-                className={`relative z-10 flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors
+                className={`relative z-10 flex-1 py-2 text-sm font-bold rounded-xl transition-colors
                   ${isCountdown ? 'text-white' : 'text-warm-400 hover:text-warm-600'}`}
               >
                 Countdown
               </button>
               <button
                 onClick={() => setTimerMode('stopwatch')}
-                className={`relative z-10 flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors
+                className={`relative z-10 flex-1 py-2 text-sm font-bold rounded-xl transition-colors
                   ${!isCountdown ? 'text-white' : 'text-warm-400 hover:text-warm-600'}`}
               >
                 Stopwatch
@@ -147,23 +147,23 @@ export default function AddTimerButton() {
                 if (e.key === 'Enter' && canAdd) handleAdd()
               }}
               placeholder={isCountdown ? 'Timer name…' : 'Stopwatch name…'}
-              className="w-full px-4 py-2.5 text-sm font-semibold bg-warm-50 rounded-2xl outline-none
+              className="w-full px-5 py-3 text-base font-semibold bg-warm-50 rounded-2xl outline-none
                          ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
-                         transition-all placeholder:text-warm-300 mb-4"
+                         transition-all placeholder:text-warm-300 mb-5"
             />
 
             {/* ── Countdown-specific UI ───────────────────────── */}
             {isCountdown && (
               <>
                 {/* Quick presets */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
+                <div className="grid grid-cols-4 gap-3 mb-5">
                   {QUICK_PRESETS.map((preset) => {
                     const isSelected = selectedPreset === preset.seconds
                     return (
                       <button
                         key={preset.seconds}
                         onClick={() => handlePresetClick(preset.seconds)}
-                        className={`px-2 py-2 text-sm font-bold rounded-2xl transition-all
+                        className={`px-3 py-2.5 text-base font-bold rounded-2xl transition-all
                           ${isSelected
                             ? 'bg-warm-800 text-white shadow-md'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100 active:bg-warm-200'
@@ -176,13 +176,13 @@ export default function AddTimerButton() {
                 </div>
 
                 {/* Divider + Custom time */}
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-4 mb-4">
                   <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
-                  <span className="text-[11px] font-bold text-warm-300 tracking-wider">Or Custom</span>
+                  <span className="text-xs font-bold text-warm-300 tracking-wider">Or Custom</span>
                   <button
                     onClick={toggleCustomMode}
-                    className="text-[11px] font-bold text-warm-400 hover:text-warm-600 bg-warm-100
-                               hover:bg-warm-200 rounded-lg transition-colors w-[68px] h-[22px]
+                    className="text-xs font-bold text-warm-400 hover:text-warm-600 bg-warm-100
+                               hover:bg-warm-200 rounded-xl transition-colors w-20 h-[26px]
                                flex items-center justify-center"
                   >
                     {customMode === 'mixed' ? 'Minutes' : 'Mixed'}
@@ -191,7 +191,7 @@ export default function AddTimerButton() {
                 </div>
 
                 {customMode === 'mixed' ? (
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-3 mb-5">
                     <input
                       type="number"
                       value={hours}
@@ -199,11 +199,11 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="99"
-                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                      className="w-full px-4 py-3 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
-                    <span className="text-sm font-bold text-warm-400">h</span>
+                    <span className="text-base font-bold text-warm-400">h</span>
                     <input
                       type="number"
                       value={minutes}
@@ -211,11 +211,11 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="59"
-                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                      className="w-full px-4 py-3 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
-                    <span className="text-sm font-bold text-warm-400">m</span>
+                    <span className="text-base font-bold text-warm-400">m</span>
                     <input
                       type="number"
                       value={seconds}
@@ -223,14 +223,14 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="59"
-                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                      className="w-full px-4 py-3 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
-                    <span className="text-sm font-bold text-warm-400">s</span>
+                    <span className="text-base font-bold text-warm-400">s</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-3 mb-5">
                     <input
                       type="number"
                       value={customMinutesOnly}
@@ -238,11 +238,11 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="1440"
-                      className="w-full px-3 py-2.5 text-center text-sm font-bold bg-warm-50 rounded-2xl
+                      className="w-full px-4 py-3 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
-                    <span className="text-sm font-bold text-warm-400">min</span>
+                    <span className="text-base font-bold text-warm-400">min</span>
                   </div>
                 )}
               </>
@@ -252,7 +252,7 @@ export default function AddTimerButton() {
             <button
               onClick={handleAdd}
               disabled={!canAdd}
-              className="w-full py-3 text-base font-bold text-white bg-warm-800
+              className="w-full py-3.5 text-lg font-bold text-white bg-warm-800
                          hover:bg-warm-700 active:bg-warm-900 rounded-2xl transition-colors
                          disabled:opacity-30 disabled:cursor-not-allowed"
             >
@@ -266,14 +266,14 @@ export default function AddTimerButton() {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-16 h-16 rounded-2xl bg-warm-800 text-white shadow-card hover:shadow-card-hover
+        className="w-20 h-20 rounded-2xl bg-warm-800 text-white shadow-card hover:shadow-card-hover
                    flex items-center justify-center transition-shadow"
       >
         <motion.svg
           animate={{ rotate: isOpen ? 45 : 0 }}
           transition={{ duration: 0.25 }}
-          width="26"
-          height="26"
+          width="32"
+          height="32"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
