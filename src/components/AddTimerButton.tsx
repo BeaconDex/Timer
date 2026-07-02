@@ -181,11 +181,11 @@ export default function AddTimerButton() {
               <>
                 {/* Quick presets */}
                 <div ref={gridRef} className="grid grid-cols-4 gap-1 mb-4 relative">
-                  {/* Selection pill — always rendered, FLIP-animated via layout prop.
+                  {/* Selection pill — behind buttons, FLIP-animated via layout prop.
                       Mirrors the Countdown/Stopwatch toggle pill exactly. */}
                   <motion.div
                     layout
-                    className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none z-30"
+                    className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none"
                     style={{
                       left: pillRect?.left ?? 0,
                       top: pillRect?.top ?? 0,
@@ -208,14 +208,13 @@ export default function AddTimerButton() {
                         whileHover={{ scale: isSelected ? 1.02 : 1.04 }}
                         whileTap={{ scale: isSelected ? 0.98 : 0.96 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
-                        className={`relative px-3 py-2 text-base font-bold rounded-2xl
-                          transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]
+                        className={`relative z-10 px-3 py-2 text-base font-bold rounded-2xl
                           ${isSelected
                             ? 'bg-warm-800 text-white'
                             : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
                           }`}
                       >
-                        <span className="relative z-40">{preset.label}</span>
+                        {preset.label}
                       </motion.button>
                     )
                   })}
