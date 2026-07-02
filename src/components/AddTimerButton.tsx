@@ -187,7 +187,7 @@ export default function AddTimerButton() {
                 </div>
 
                 {/* Divider + Custom time */}
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <div className="flex-1 h-px" style={{ backgroundColor: '#E0D6CB' }} />
                   <span className="text-sm font-bold text-warm-300 tracking-wider">Or Custom</span>
                   <button
