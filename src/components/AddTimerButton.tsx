@@ -187,7 +187,7 @@ export default function AddTimerButton() {
                       <motion.div
                         key="preset-pill"
                         className="absolute bg-warm-800 rounded-2xl shadow-md pointer-events-none z-0"
-                        initial={{ opacity: 0, scale: 0.92 }}
+                        initial={false}
                         animate={{
                           left: pillRect.left,
                           top: pillRect.top,
