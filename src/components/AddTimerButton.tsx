@@ -110,7 +110,7 @@ export default function AddTimerButton() {
             className="absolute bottom-20 right-0 bg-white rounded-3xl shadow-card-hover p-4 w-[520px] z-20"
           >
             {/* ── Mode toggle ─────────────────────────────────── */}
-            <div className="relative flex bg-warm-100 rounded-2xl p-1 mb-2">
+            <div className="relative flex bg-warm-100 rounded-2xl p-1 mb-3">
               {/* Sliding pill indicator */}
               <motion.div
                 layout
@@ -199,7 +199,7 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="99"
-                      className="w-full px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
+                      className="w-[100px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
@@ -211,7 +211,7 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="59"
-                      className="w-full px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
+                      className="w-[100px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
@@ -223,7 +223,7 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="59"
-                      className="w-full px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
+                      className="w-[100px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
@@ -238,7 +238,7 @@ export default function AddTimerButton() {
                       placeholder="0"
                       min="0"
                       max="1440"
-                      className="w-full px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
+                      className="w-[100px] px-4 py-2.5 text-center text-base font-bold bg-warm-50 rounded-2xl
                                  outline-none ring-2 ring-transparent focus:ring-warm-300 focus:bg-white
                                  transition-all placeholder:text-warm-300 focus:placeholder:text-transparent"
                     />
