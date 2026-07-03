@@ -27,10 +27,11 @@ export default function AddTimerButton() {
   const [customMode, setCustomMode] = useState<'mixed' | 'minutes'>('mixed')
   const addTimer = useTimerStore((s) => s.addTimer)
 
-  const h = parseInt(hours) || 0
-  const m = parseInt(minutes) || 0
-  const s = parseInt(seconds) || 0
-  const cm = parseInt(customMinutesOnly) || 0
+  // Clamp inputs to reasonable bounds to prevent overflow
+  const h = Math.min(Math.max(parseInt(hours) || 0, 0), 99)
+  const m = Math.min(Math.max(parseInt(minutes) || 0, 0), 59)
+  const s = Math.min(Math.max(parseInt(seconds) || 0, 0), 59)
+  const cm = Math.min(Math.max(parseInt(customMinutesOnly) || 0, 0), 1440)
 
   const customTotal =
     customMode === 'minutes'

@@ -14,17 +14,15 @@ export interface TimerData {
 }
 
 const COLORS = ['#E8C5C5', '#C5D3E8', '#C5E8D3', '#E8DDC5', '#D3C5E8']
-let colorIndex = 0
 
-function nextColor(): string {
-  const c = COLORS[colorIndex % COLORS.length]
-  colorIndex++
-  return c
+function nextColor(existingCount: number): string {
+  return COLORS[existingCount % COLORS.length]
 }
 
 interface TimerStore {
   timers: TimerData[]
-  alertTimerId: string | null
+  /** FIFO queue of timer IDs awaiting user dismissal. */
+  alertQueue: string[]
   addTimer: (label: string, totalSeconds: number, mode?: 'countdown' | 'stopwatch') => void
   removeTimer: (id: string) => void
   updateTimer: (id: string, updates: Partial<TimerData>) => void
@@ -32,7 +30,8 @@ interface TimerStore {
   pauseTimer: (id: string) => void
   resetTimer: (id: string) => void
   completeTimer: (id: string) => void
-  dismissAlert: () => void
+  /** Dismiss a specific alert and reset that timer's remaining time. */
+  dismissAlert: (id: string) => void
   tickTimer: (id: string) => void
   tickTimerBySeconds: (id: string, seconds: number) => void
 }
@@ -41,7 +40,7 @@ export const useTimerStore = create<TimerStore>()(
   persist(
     (set) => ({
       timers: [],
-      alertTimerId: null,
+      alertQueue: [],
 
       addTimer: (label, totalSeconds, mode = 'countdown') =>
         set((state) => ({
@@ -54,7 +53,7 @@ export const useTimerStore = create<TimerStore>()(
               remainingSeconds: totalSeconds,
               isRunning: false,
               createdAt: Date.now(),
-              color: nextColor(),
+              color: nextColor(state.timers.length),
               mode,
               elapsedSeconds: 0,
             },
@@ -64,7 +63,7 @@ export const useTimerStore = create<TimerStore>()(
       removeTimer: (id) =>
         set((state) => ({
           timers: state.timers.filter((t) => t.id !== id),
-          alertTimerId: state.alertTimerId === id ? null : state.alertTimerId,
+          alertQueue: state.alertQueue.filter((aid) => aid !== id),
         })),
 
       updateTimer: (id, updates) =>
@@ -96,30 +95,32 @@ export const useTimerStore = create<TimerStore>()(
               ? { ...t, elapsedSeconds: 0, isRunning: false }
               : { ...t, remainingSeconds: t.totalSeconds, isRunning: false }
           }),
-          alertTimerId: state.alertTimerId === id ? null : state.alertTimerId,
+          alertQueue: state.alertQueue.filter((aid) => aid !== id),
         })),
 
       completeTimer: (id) =>
-        set((state) => ({
-          timers: state.timers.map((t) =>
-            t.id === id
-              ? { ...t, isRunning: false, remainingSeconds: 0 }
-              : t
-          ),
-          // Emit alert event — non-persisted, survives only this session
-          alertTimerId: id,
-        })),
+        set((state) => {
+          // Stopwatch never completes — ignore
+          const timer = state.timers.find((t) => t.id === id)
+          if (!timer || timer.mode === 'stopwatch') return state
+          // Avoid duplicate entries in the alert queue
+          if (state.alertQueue.includes(id)) return state
+          return {
+            timers: state.timers.map((t) =>
+              t.id === id
+                ? { ...t, isRunning: false, remainingSeconds: 0 }
+                : t
+            ),
+            alertQueue: [...state.alertQueue, id],
+          }
+        }),
 
-      dismissAlert: () =>
+      dismissAlert: (id) =>
         set((state) => ({
-          alertTimerId: null,
-          timers: state.alertTimerId
-            ? state.timers.map((t) =>
-                t.id === state.alertTimerId
-                  ? { ...t, remainingSeconds: t.totalSeconds }
-                  : t
-              )
-            : state.timers,
+          alertQueue: state.alertQueue.filter((aid) => aid !== id),
+          timers: state.timers.map((t) =>
+            t.id === id ? { ...t, remainingSeconds: t.totalSeconds } : t
+          ),
         })),
 
       tickTimer: (id) =>
@@ -140,10 +141,8 @@ export const useTimerStore = create<TimerStore>()(
           timers: state.timers.map((t) => {
             if (t.id !== id || !t.isRunning) return t
             if (t.mode === 'stopwatch') {
-              // Count up — never completes
               return { ...t, elapsedSeconds: t.elapsedSeconds + seconds }
             }
-            // Count down
             return { ...t, remainingSeconds: Math.max(0, t.remainingSeconds - seconds) }
           }),
         })),
@@ -155,7 +154,7 @@ export const useTimerStore = create<TimerStore>()(
           ...t,
           isRunning: false,
         })),
-        // alertTimerId is NOT persisted — time-up is a message, not a status
+        // alertQueue is NOT persisted — alerts are a message, not a status
       }),
     }
   )

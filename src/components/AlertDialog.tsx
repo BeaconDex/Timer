@@ -4,17 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface AlertDialogProps {
   isOpen: boolean
   timerLabel: string
-  onDismiss: () => void
+  timerId: string
+  onDismiss: (timerId: string) => void
 }
 
-export default function AlertDialog({ isOpen, timerLabel, onDismiss }: AlertDialogProps) {
+export default function AlertDialog({ isOpen, timerLabel, timerId, onDismiss }: AlertDialogProps) {
+  const handleDismiss = useCallback(() => {
+    onDismiss(timerId)
+  }, [onDismiss, timerId])
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
-        onDismiss()
+        handleDismiss()
       }
     },
-    [onDismiss]
+    [handleDismiss]
   )
 
   useEffect(() => {
@@ -33,7 +38,7 @@ export default function AlertDialog({ isOpen, timerLabel, onDismiss }: AlertDial
           exit={{ opacity: 0 }}
           className="absolute inset-0 z-50 flex items-center justify-center
                      bg-warm-900/30 backdrop-blur-md"
-          onClick={onDismiss}
+          onClick={handleDismiss}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -64,7 +69,7 @@ export default function AlertDialog({ isOpen, timerLabel, onDismiss }: AlertDial
             </p>
 
             <button
-              onClick={onDismiss}
+              onClick={handleDismiss}
               className="w-full py-3.5 bg-warm-800 text-white rounded-2xl font-bold
                          hover:bg-warm-700 active:bg-warm-900 transition-colors text-base"
               autoFocus

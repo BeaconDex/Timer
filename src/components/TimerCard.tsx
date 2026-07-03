@@ -12,7 +12,12 @@ interface TimerCardProps {
 export default function TimerCard({ timer: timerData }: TimerCardProps) {
   const timerHook = useTimer(timerData.id)
 
-  const alertTimerId = useTimerStore((s) => s.alertTimerId)
+  // Only subscribe to whether THIS timer is in the alert queue —
+  // avoids re-rendering all cards when any single alert fires.
+  const isCompleted = useTimerStore(
+    (s) => s.alertQueue.includes(timerData.id)
+  )
+
   const startTimer = useTimerStore((s) => s.startTimer)
   const pauseTimer = useTimerStore((s) => s.pauseTimer)
   const resetTimer = useTimerStore((s) => s.resetTimer)
@@ -23,7 +28,6 @@ export default function TimerCard({ timer: timerData }: TimerCardProps) {
   const { timer, progress, display } = timerHook
   // Stopwatch never completes — it just counts up
   const isStopwatch = timer.mode === 'stopwatch'
-  const isCompleted = !isStopwatch && timer.id === alertTimerId
 
   return (
     <motion.div

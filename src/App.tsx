@@ -11,37 +11,60 @@ import TitleBar from './components/TitleBar'
 export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const { startAlarm, stopAlarm } = useSound()
-  const alertTimerId = useTimerStore((s) => s.alertTimerId)
-  const dismissAlert = useTimerStore((s) => s.dismissAlert)
+  const alertQueue = useTimerStore((s) => s.alertQueue)
+  const dismissAlertAction = useTimerStore((s) => s.dismissAlert)
   const timers = useTimerStore((s) => s.timers)
   const settings = useSettingsStore()
 
-  // Watch for alertTimerId changes — this is the "time-up message"
-  // It fires exactly once per completion because the store only sets it on completeTimer
+  // Track which alert IDs we've already fired sound/notification for,
+  // so we don't repeat on re-renders or StrictMode double-invoke.
+  const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set())
+
+  // Current alert is the first in the queue
+  const currentAlertId: string | null = alertQueue.length > 0 ? alertQueue[0] : null
+
+  // Fire sound + notification when a new alert enters the queue
   useEffect(() => {
-    if (alertTimerId) {
-      const timer = timers.find((t) => t.id === alertTimerId)
+    if (!currentAlertId) return
 
-      if (settings.soundEnabled) {
-        startAlarm(settings.alarmDuration > 0 ? settings.alarmDuration : undefined)
-      }
+    // Skip if we already fired for this ID (handles StrictMode double-fire)
+    if (notifiedIds.has(currentAlertId)) return
 
-      if (settings.notificationsEnabled && window.electronAPI) {
-        window.electronAPI.showNotification(
-          'Timer Finished',
-          timer ? `"${timer.label}" has completed!` : 'A timer has completed!'
-        )
-      }
+    setNotifiedIds((prev) => new Set(prev).add(currentAlertId))
+
+    const timer = timers.find((t) => t.id === currentAlertId)
+
+    if (settings.soundEnabled) {
+      startAlarm(settings.alarmDuration > 0 ? settings.alarmDuration : undefined)
     }
-  }, [alertTimerId]) // Only fires when alertTimerId changes — pure event
 
-  const handleDismissAlert = useCallback(() => {
+    if (settings.notificationsEnabled && window.electronAPI) {
+      window.electronAPI.showNotification(
+        'Timer Finished',
+        timer ? `"${timer.label}" has completed!` : 'A timer has completed!'
+      ).catch(() => {})
+    }
+
+    // Cleanup: stop alarm if this alert is removed from the queue
+    return () => {
+      stopAlarm()
+    }
+  }, [currentAlertId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When the queue empties, reset notifiedIds so future alerts fire again
+  useEffect(() => {
+    if (alertQueue.length === 0 && notifiedIds.size > 0) {
+      setNotifiedIds(new Set())
+    }
+  }, [alertQueue.length, notifiedIds.size])
+
+  const handleDismissAlert = useCallback((id: string) => {
     stopAlarm()
-    dismissAlert()
-  }, [stopAlarm, dismissAlert])
+    dismissAlertAction(id)
+  }, [stopAlarm, dismissAlertAction])
 
-  const alertTimer = alertTimerId
-    ? timers.find((t) => t.id === alertTimerId)
+  const currentTimer = currentAlertId
+    ? timers.find((t) => t.id === currentAlertId)
     : null
 
   return (
@@ -92,11 +115,12 @@ export default function App() {
           onClose={() => setShowSettings(false)}
         />
 
-        {/* Alert dialog */}
-        {alertTimer && (
+        {/* Alert dialog — shows for the current (first) alert in the queue */}
+        {currentTimer && (
           <AlertDialog
-            isOpen={!!alertTimer}
-            timerLabel={alertTimer.label}
+            isOpen={!!currentTimer}
+            timerLabel={currentTimer.label}
+            timerId={currentTimer.id}
             onDismiss={handleDismissAlert}
           />
         )}

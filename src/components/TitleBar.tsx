@@ -4,17 +4,17 @@ export default function TitleBar() {
   const [isPinned, setIsPinned] = useState(false)
 
   const handleClose = () => {
-    window.electronAPI?.closeWindow()
+    window.electronAPI?.closeWindow()?.catch(() => {})
   }
 
   const handleMinimize = () => {
-    window.electronAPI?.minimizeWindow()
+    window.electronAPI?.minimizeWindow()?.catch(() => {})
   }
 
   const handlePin = () => {
     const newState = !isPinned
     setIsPinned(newState)
-    window.electronAPI?.setAlwaysOnTop(newState)
+    window.electronAPI?.setAlwaysOnTop(newState)?.catch(() => {})
   }
 
   return (

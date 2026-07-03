@@ -3,6 +3,7 @@ import { useRef, useCallback, useEffect, useState } from 'react'
 export function useSound() {
   const audioContextRef = useRef<AudioContext | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stoppedRef = useRef(false)
   const [isPlaying, setIsPlaying] = useState(false)
 
@@ -17,25 +18,29 @@ export function useSound() {
     return audioContextRef.current
   }, [])
 
-  const playBeep = useCallback(() => {
-    const ctx = getContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    gain.gain.setValueAtTime(0.5, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
-
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.3)
-  }, [getContext])
+  const stopAlarmInternal = useCallback(() => {
+    stoppedRef.current = true
+    setIsPlaying(false)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    // Close AudioContext to immediately kill any currently-playing sounds
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {})
+    }
+  }, [])
 
   const startAlarm = useCallback((durationSeconds?: number) => {
-    if (isPlaying) return
+    // If already playing, stop first so a new alert can take over.
+    // This handles rapid successive completions and alert queue advances.
+    if (isPlaying) {
+      stopAlarmInternal()
+    }
 
     stoppedRef.current = false
     setIsPlaying(true)
@@ -69,26 +74,13 @@ export function useSound() {
 
     // Auto-stop after duration if specified
     if (durationSeconds && durationSeconds > 0) {
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (!stoppedRef.current) {
           stopAlarmInternal()
         }
       }, durationSeconds * 1000)
     }
-  }, [isPlaying, getContext])
-
-  const stopAlarmInternal = useCallback(() => {
-    stoppedRef.current = true
-    setIsPlaying(false)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    // Close AudioContext to immediately kill any currently-playing sounds
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close().catch(() => {})
-    }
-  }, [])
+  }, [isPlaying, getContext, stopAlarmInternal])
 
   const stopAlarm = useCallback(() => {
     stopAlarmInternal()
@@ -100,5 +92,5 @@ export function useSound() {
     }
   }, [stopAlarmInternal])
 
-  return { playBeep, startAlarm, stopAlarm, isPlaying }
+  return { startAlarm, stopAlarm, isPlaying }
 }
