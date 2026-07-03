@@ -5,44 +5,47 @@ export function useTimer(timerId: string) {
   const timer = useTimerStore((s) => s.timers.find((t) => t.id === timerId))
   const tickTimerBySeconds = useTimerStore((s) => s.tickTimerBySeconds)
   const completeTimer = useTimerStore((s) => s.completeTimer)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastTickRef = useRef<number>(Date.now())
 
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
-
-  // Main countdown / count-up — Date.now()-based to survive Chromium's background throttling
+  // ── Tick source ──────────────────────────────────────────
+  // Prefers main-process heartbeat (IPC 'timer-tick') which is
+  // immune to Chromium's background throttling. Falls back to
+  // renderer-side setInterval when running in a plain browser.
   useEffect(() => {
-    if (timer?.isRunning) {
-      lastTickRef.current = Date.now()
+    if (!timer?.isRunning) return
 
-      intervalRef.current = setInterval(() => {
-        const now = Date.now()
-        const elapsed = Math.floor((now - lastTickRef.current) / 1000)
-        if (elapsed >= 1) {
-          tickTimerBySeconds(timerId, elapsed)
-          lastTickRef.current += elapsed * 1000
-        }
-      }, 250) // poll every 250ms; actual ticks are batched by elapsed seconds
+    lastTickRef.current = Date.now()
 
-      return clearTimer
-    } else {
-      clearTimer()
+    const tick = () => {
+      const now = Date.now()
+      const elapsed = Math.floor((now - lastTickRef.current) / 1000)
+      if (elapsed >= 1) {
+        tickTimerBySeconds(timerId, elapsed)
+        lastTickRef.current += elapsed * 1000
+      }
     }
-  }, [timer?.isRunning, timerId, tickTimerBySeconds, clearTimer])
 
-  // Detect completion (countdown only — stopwatch never completes)
+    // Main-process heartbeat — runs even when window is hidden
+    if (window.electronAPI?.onTimerTick) {
+      return window.electronAPI.onTimerTick(() => tick())
+    }
+
+    // Fallback: renderer interval (subject to background throttling)
+    const id = setInterval(tick, 250)
+    return () => clearInterval(id)
+  }, [timer?.isRunning, timerId, tickTimerBySeconds])
+
+  // ── Completion detection (countdown only — stopwatch never completes) ─
   useEffect(() => {
     if (timer && timer.mode === 'countdown' && timer.remainingSeconds <= 0 && timer.isRunning) {
       completeTimer(timerId)
     }
   }, [timer?.remainingSeconds, timer?.isRunning, timer?.mode, timerId, completeTimer])
 
-  // Visibility change compensation — catch up on wake
+  // ── Visibility catch-up ──────────────────────────────────
+  // Secondary safety net: when the window regains focus after
+  // a long absence, immediately process any ticks that were
+  // queued up by the main-process heartbeat while hidden.
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && timer?.isRunning) {

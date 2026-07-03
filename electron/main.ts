@@ -4,6 +4,7 @@ import path from 'path'
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+let tickInterval: ReturnType<typeof setInterval> | null = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -123,6 +124,27 @@ function createTray() {
   })
 }
 
+// ── Timer tick heartbeat ──────────────────────────────────
+// Node.js timers in the main process are NOT subject to
+// Chromium's background throttling — this keeps timers
+// accurate even when the window is minimized or hidden.
+
+function startTickHeartbeat() {
+  if (tickInterval) return
+  tickInterval = setInterval(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('timer-tick', Date.now())
+    }
+  }, 1000)
+}
+
+function stopTickHeartbeat() {
+  if (tickInterval) {
+    clearInterval(tickInterval)
+    tickInterval = null
+  }
+}
+
 // IPC handlers
 ipcMain.handle('show-notification', (_event, title: string, body: string) => {
   if (Notification.isSupported()) {
@@ -163,6 +185,7 @@ ipcMain.handle('close-window', () => {
 app.whenReady().then(() => {
   createWindow()
   createTray()
+  startTickHeartbeat()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -181,6 +204,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   isQuitting = true
+  stopTickHeartbeat()
   if (tray) {
     tray.destroy()
     tray = null

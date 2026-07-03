@@ -9,4 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('minimize-window'),
   closeWindow: () =>
     ipcRenderer.invoke('close-window'),
+  onTimerTick: (callback: (timestamp: number) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, timestamp: number) =>
+      callback(timestamp)
+    ipcRenderer.on('timer-tick', handler)
+    return () => { ipcRenderer.removeListener('timer-tick', handler) }
+  },
 })
